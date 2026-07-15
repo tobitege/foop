@@ -48,7 +48,7 @@ if ($Scope -eq 'AllUsers') {
     }
 }
 
-$workingDirectory = Split-Path -LiteralPath $executable -Parent
+$workingDirectory = Split-Path -Path $executable -Parent
 $shell = $null
 $shortcut = $null
 try {
