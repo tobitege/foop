@@ -1,0 +1,172 @@
+name: Release
+
+# Manual release workflow adapted from Flowery.NET.
+# Run it from main and enter the version without a leading "v".
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (for example 0.1.0, without the v prefix)'
+        required: true
+        type: string
+
+env:
+  DOTNET_NOLOGO: true
+  PROJECT_PATH: src/Foop/Foop.csproj
+
+jobs:
+  release:
+    runs-on: windows-2025
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Validate branch, version, and changelog
+        shell: pwsh
+        env:
+          RELEASE_VERSION_INPUT: ${{ inputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = $env:RELEASE_VERSION_INPUT
+
+          if ($env:GITHUB_REF -ne 'refs/heads/main') {
+              throw 'Releases can only be created from the main branch.'
+          }
+
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+              throw 'Invalid version format. Use semantic versioning such as 0.1.0.'
+          }
+
+          [xml] $project = Get-Content -LiteralPath $env:PROJECT_PATH -Raw
+          $configuredVersion = [string] $project.Project.PropertyGroup.Version
+          if ($configuredVersion -ne $version) {
+              throw "Version mismatch: Foop.csproj contains '$configuredVersion', but the workflow input is '$version'."
+          }
+
+          $changelogPattern = "^## \[$([regex]::Escape($version))\](?:\s|$)"
+          $hasChangelogEntry = Select-String -LiteralPath 'CHANGELOG.md' -Pattern $changelogPattern -Quiet
+          if (-not $hasChangelogEntry) {
+              throw "CHANGELOG.md has no entry for version $version."
+          }
+
+          "RELEASE_VERSION=$version" >> $env:GITHUB_ENV
+          "RELEASE_TAG=v$version" >> $env:GITHUB_ENV
+
+      - name: Build and test
+        shell: pwsh
+        run: pwsh -NoProfile -File ./verify.ps1 -Configuration Release
+
+      - name: Publish Windows x64 application
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $publishDirectory = Join-Path $env:RUNNER_TEMP 'foop-publish'
+          $arguments = @(
+              'publish'
+              $env:PROJECT_PATH
+              '--configuration'
+              'Release'
+              '--runtime'
+              'win-x64'
+              '--self-contained'
+              'true'
+              '--output'
+              $publishDirectory
+              '-p:PublishSingleFile=true'
+              '-p:IncludeNativeLibrariesForSelfExtract=true'
+              '-p:EnableCompressionInSingleFile=true'
+          )
+
+          & dotnet @arguments
+          if ($LASTEXITCODE -ne 0) {
+              throw "dotnet publish failed with exit code $LASTEXITCODE."
+          }
+
+          $packageFiles = @('README.md', 'CHANGELOG.md', 'create-start-menu-shortcut.ps1')
+          foreach ($packageFile in $packageFiles) {
+              Copy-Item -LiteralPath $packageFile -Destination $publishDirectory
+          }
+
+          "FOOP_PUBLISH_DIRECTORY=$publishDirectory" >> $env:GITHUB_ENV
+
+      - name: Create release archive
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $artifactDirectory = Join-Path $env:GITHUB_WORKSPACE 'artifacts\release'
+          $archivePath = Join-Path $artifactDirectory "Foop-v$env:RELEASE_VERSION-win-x64.zip"
+          New-Item -ItemType Directory -Path $artifactDirectory -Force | Out-Null
+
+          $publishedFiles = Get-ChildItem -LiteralPath $env:FOOP_PUBLISH_DIRECTORY
+          if ($publishedFiles.Count -eq 0) {
+              throw 'The publish directory is empty.'
+          }
+
+          Compress-Archive -Path $publishedFiles.FullName -DestinationPath $archivePath -CompressionLevel Optimal
+
+      - name: Extract release notes
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $lines = @(Get-Content -LiteralPath 'CHANGELOG.md')
+          $headerPattern = "^## \[$([regex]::Escape($env:RELEASE_VERSION))\](?:\s|$)"
+          $startIndex = -1
+
+          for ($index = 0; $index -lt $lines.Count; $index++) {
+              if ($lines[$index] -match $headerPattern) {
+                  $startIndex = $index
+                  break
+              }
+          }
+
+          if ($startIndex -lt 0) {
+              throw "Unable to extract CHANGELOG.md entry for $env:RELEASE_VERSION."
+          }
+
+          $endIndex = $lines.Count
+          for ($index = $startIndex + 1; $index -lt $lines.Count; $index++) {
+              if ($lines[$index] -match '^## \[') {
+                  $endIndex = $index
+                  break
+              }
+          }
+
+          $section = if ($endIndex -gt $startIndex + 1) {
+              $lines[($startIndex + 1)..($endIndex - 1)]
+          }
+          else {
+              @()
+          }
+
+          $releaseNotes = @("## What's Changed", '') + $section
+          $releaseNotesPath = Join-Path $env:GITHUB_WORKSPACE 'release-notes.md'
+          $encoding = [Text.UTF8Encoding]::new($false)
+          [IO.File]::WriteAllLines($releaseNotesPath, $releaseNotes, $encoding)
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: Foop ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
+          body_path: release-notes.md
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: artifacts/release/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        shell: pwsh
+        run: |
+          "## Foop $env:RELEASE_TAG released" >> $env:GITHUB_STEP_SUMMARY
+          '' >> $env:GITHUB_STEP_SUMMARY
+          "- Asset: Foop-v$env:RELEASE_VERSION-win-x64.zip" >> $env:GITHUB_STEP_SUMMARY
+          "- Release: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/releases/tag/$env:RELEASE_TAG" >> $env:GITHUB_STEP_SUMMARY
