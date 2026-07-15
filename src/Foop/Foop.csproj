@@ -8,6 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\foop.ico</ApplicationIcon>
     <AssemblyName>Foop</AssemblyName>
     <RootNamespace>Foop</RootNamespace>
     <StartupObject>Foop.Program</StartupObject>
