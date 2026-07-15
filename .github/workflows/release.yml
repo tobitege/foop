@@ -22,7 +22,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-dotnet@v5
         with:
@@ -151,7 +151,7 @@ jobs:
           [IO.File]::WriteAllLines($releaseNotesPath, $releaseNotes, $encoding)
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v3.0.1
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: Foop ${{ env.RELEASE_TAG }}
