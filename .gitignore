@@ -9,3 +9,8 @@ obj/
 *.user
 *.userosscache
 *.sln.docstates
+
+# Local agent planning files
+task_plan.md
+findings.md
+progress.md
