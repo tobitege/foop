@@ -1,4 +1,8 @@
-# Foop
+<h1 align="center">Foop</h1>
+
+<p align="center">
+  <img src=".github/assets/foop-hero.png" alt="Two cartoon monitors moving an application window from right to left" width="100%">
+</p>
 
 Foop is a small .NET 10 Windows desktop utility for multi-monitor setups. It lists active desktop windows and moves the selected window, centered, onto the monitor whose taskbar was used to open Foop.
 
