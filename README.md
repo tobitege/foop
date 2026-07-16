@@ -27,11 +27,17 @@ The application uses only .NET/WPF and Windows APIs. It has no external NuGet pa
 
 ## Build and test
 
+Build the solution:
+
+```powershell
+dotnet build .\Foop.slnx --configuration Release
+```
+
+To build and then run the test project in one step, use `verify.ps1`. It calls `build.ps1` (Release `dotnet build` of `Foop.slnx`) and `test.ps1` (`dotnet run` on `tests\Foop.Tests`), and writes logs to `artifacts\logs`:
+
 ```powershell
 pwsh -NoProfile -File .\verify.ps1
 ```
-
-Build and test logs are written to `artifacts\logs`.
 
 ## Run
 

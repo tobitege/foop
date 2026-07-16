@@ -9,6 +9,7 @@ internal sealed class FoopController : IDisposable
 {
     private readonly MonitorService _monitorService = new();
     private readonly DesktopWindowService _desktopWindowService = new();
+    private readonly SettingsService _settingsService = new();
     private readonly List<MainWindow> _monitorWindows = [];
     private IReadOnlyList<MonitorDescriptor> _activeMonitors = [];
     private bool _displayRefreshPending;
@@ -37,7 +38,7 @@ internal sealed class FoopController : IDisposable
         _activeMonitors = _monitorService.GetActiveMonitors();
         foreach (var monitor in _activeMonitors)
         {
-            var monitorWindow = new MainWindow(_desktopWindowService, Shutdown);
+            var monitorWindow = new MainWindow(_desktopWindowService, _settingsService, Shutdown);
             _monitorWindows.Add(monitorWindow);
             monitorWindow.InitializeForMonitor(monitor, _activeMonitors.Count);
         }

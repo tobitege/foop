@@ -26,7 +26,7 @@ internal static class Program
         windowsDirectory = Environment.GetEnvironmentVariable("SystemRoot");
         if (string.IsNullOrWhiteSpace(windowsDirectory) || !Directory.Exists(windowsDirectory))
         {
-            throw new InvalidOperationException("Das Windows-Verzeichnis konnte nicht ermittelt werden.");
+            throw new InvalidOperationException("The Windows directory could not be determined.");
         }
 
         Environment.SetEnvironmentVariable(

@@ -50,7 +50,7 @@ internal sealed partial class MonitorService
     {
         if (monitors.Count == 0)
         {
-            throw new InvalidOperationException("Windows meldet keinen aktiven Monitor.");
+            throw new InvalidOperationException("Windows reported no active monitor.");
         }
 
         if (NativeMethods.GetCursorPos(out var cursor))
@@ -73,7 +73,7 @@ internal sealed partial class MonitorService
     {
         var match = DisplayNumberRegex().Match(deviceName);
         var number = match.Success ? match.Groups[1].Value : deviceName;
-        return isPrimary ? $"Monitor {number} (Hauptanzeige)" : $"Monitor {number}";
+        return isPrimary ? $"Monitor {number} (Primary)" : $"Monitor {number}";
     }
 
     [GeneratedRegex(@"DISPLAY(\d+)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]

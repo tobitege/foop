@@ -40,7 +40,18 @@ internal sealed class DesktopWindowService
     {
         if (!NativeMethods.IsWindow(window.Handle))
         {
-            return new WindowMoveResult(false, "Das ausgewählte Fenster ist nicht mehr geöffnet.");
+            return new WindowMoveResult(false, "The selected window is no longer open.");
+        }
+
+        var windowMonitor = NativeMethods.MonitorFromWindow(
+            window.Handle,
+            NativeMethods.MonitorDefaultToNearest);
+        if (windowMonitor == monitor.Handle)
+        {
+            return new WindowMoveResult(
+                true,
+                $"\"{window.Title}\" is already on {monitor.DisplayName}.",
+                Relocated: false);
         }
 
         try
@@ -53,17 +64,17 @@ internal sealed class DesktopWindowService
             WindowPlacementService.CenterWindow(window.Handle, monitor, constrainToWorkArea: true);
             NativeMethods.ShowWindow(window.Handle, NativeMethods.SwShow);
             NativeMethods.SetForegroundWindow(window.Handle);
-            return new WindowMoveResult(true, $"„{window.Title}“ wurde auf {monitor.DisplayName} verschoben.");
+            return new WindowMoveResult(true, $"\"{window.Title}\" was moved to {monitor.DisplayName}.");
         }
         catch (Win32Exception exception) when (exception.NativeErrorCode == 5)
         {
             return new WindowMoveResult(
                 false,
-                "Windows hat den Zugriff verweigert. Das Zielprogramm läuft möglicherweise mit Administratorrechten.");
+                "Windows denied access. The target application may be running elevated.");
         }
         catch (Win32Exception exception)
         {
-            return new WindowMoveResult(false, $"Das Fenster konnte nicht verschoben werden: {exception.Message}");
+            return new WindowMoveResult(false, $"The window could not be moved: {exception.Message}");
         }
     }
 
@@ -133,17 +144,17 @@ internal sealed class DesktopWindowService
         }
         catch (ArgumentException)
         {
-            return "Anwendung";
+            return "Application";
         }
         catch (InvalidOperationException)
         {
-            return "Anwendung";
+            return "Application";
         }
         catch (Win32Exception)
         {
-            return "Anwendung";
+            return "Application";
         }
     }
 }
 
-internal sealed record WindowMoveResult(bool Success, string Message);
+internal sealed record WindowMoveResult(bool Success, string Message, bool Relocated = true);

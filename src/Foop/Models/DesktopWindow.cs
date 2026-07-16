@@ -13,5 +13,5 @@ internal sealed record DesktopWindow(
 
     public string ProcessDisplayName => $"{ProcessName}  ·  PID {ProcessId}";
 
-    public string StateLabel => IsMinimized ? "Minimiert" : string.Empty;
+    public string StateLabel => IsMinimized ? "Minimized" : string.Empty;
 }

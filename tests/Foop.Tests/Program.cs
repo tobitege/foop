@@ -26,7 +26,12 @@ var tests = new (string Name, Action Run)[]
         WindowPlacementService.CenterWithin(
             new ScreenRect(0, 0, 800, 600),
             new ScreenRect(3840, 40, 2800, 1400),
-            constrainToWorkArea: true)))
+            constrainToWorkArea: true))),
+    ("Clamps a restored position into the work area", () => AssertRect(
+        new ScreenRect(1120, 680, 800, 400),
+        WindowPlacementService.PlaceWithin(
+            new ScreenRect(2000, 900, 800, 400),
+            new ScreenRect(0, 0, 1920, 1080))))
 };
 
 foreach (var test in tests)

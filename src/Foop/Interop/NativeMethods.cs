@@ -85,6 +85,10 @@ internal static class NativeMethods
 
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool GetWindowPlacement(nint windowHandle, ref WindowPlacement placement);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
     internal static extern bool SetWindowPos(
         nint windowHandle,
         nint insertAfter,
@@ -118,6 +122,9 @@ internal static class NativeMethods
     internal static extern nint MonitorFromPoint(Point point, uint flags);
 
     [DllImport("user32.dll")]
+    internal static extern nint MonitorFromWindow(nint windowHandle, uint flags);
+
+    [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static extern bool GetCursorPos(out Point point);
 
@@ -135,6 +142,17 @@ internal static class NativeMethods
         internal int Top;
         internal int Right;
         internal int Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct WindowPlacement
+    {
+        internal int Length;
+        internal int Flags;
+        internal int ShowCmd;
+        internal Point MinPosition;
+        internal Point MaxPosition;
+        internal Rect NormalPosition;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]

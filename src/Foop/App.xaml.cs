@@ -24,7 +24,7 @@ public partial class App : Application
         catch (Exception exception)
         {
             MessageBox.Show(
-                $"Foop konnte nicht gestartet werden.\n\n{exception.Message}",
+                $"Foop could not be started.\n\n{exception.Message}",
                 "Foop",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
