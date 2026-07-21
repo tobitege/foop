@@ -4,15 +4,23 @@
   <img src=".github/assets/foop-hero.png" alt="Two cartoon monitors moving an application window from right to left" width="100%">
 </p>
 
-Foop is a small .NET 10 Windows desktop utility for multi-monitor setups. It lists active desktop windows and moves the selected window, centered, onto the monitor whose taskbar was used to open Foop.
+Foop is a small .NET 10 Windows desktop utility for multi-monitor setups. It lists active desktop windows and moves a selected window, centered, onto any active monitor.
 
-## Behavior
+## Features
 
 - Creates one Foop window per active monitor: secondary monitors use a minimized taskbar button; the primary monitor uses the notification area (system tray) instead.
 - Rebuilds those entries when displays are connected, disconnected, switched on, or switched off.
 - Shows only visible, user-facing top-level desktop windows; Foop, tool windows, owned dialogs, and cloaked virtual-desktop windows are excluded.
+- Offers Detail and Grid views and can list windows by application name or window title.
+- Moves the selected window to the current monitor with **Foop!** or a double-click.
+- Opens an app action dialog on right-click to send the app to any active monitor.
+- Stores per-app monitor preferences and automatically moves the first running instance to the chosen monitor.
+- Marks apps with an active monitor preference using a red monitor-number badge.
 - Restores minimized or maximized windows before moving them.
 - Keeps the moved window inside the target monitor's working area.
+- Persists view mode, window layout, tray behavior, startup behavior, and app monitor preferences in the current user's profile.
+- Supports **Start with Windows**, **Start minimized**, **Auto-Minimize on Fooping**, **Minimize to Tray**, and **Close to Tray**.
+- Runs as a single instance per Windows session.
 - Reports Windows access denial, which can occur when the target application runs elevated and Foop does not.
 
 Windows still controls how application buttons are grouped or duplicated through its multi-monitor taskbar settings. Foop places a real top-level window on each active monitor so modes that show buttons on the window's monitor work as intended.
@@ -45,11 +53,13 @@ pwsh -NoProfile -File .\Scripts\verify.ps1
 dotnet run --project .\src\Foop\Foop.csproj
 ```
 
-Closing the primary Foop window hides it to the tray (Exit via the tray menu). Closing a Foop window on a secondary monitor exits the application.
+**Minimize to Tray** and **Close to Tray** independently control whether minimizing or closing any Foop window hides it in the notification area. Use **Exit Foop** in the tray menu to quit.
 
 ## Start menu shortcut
 
-In a downloaded release, keep the script beside `Foop.exe`. In the source repository, build Foop first. Then create the shortcut for the current user:
+Use **Settings → Create Start Menu icon…** to create a shortcut for the current user or all users. The all-users option requests administrator rights.
+
+The same operation is available through PowerShell. In a downloaded release, keep the script beside `Foop.exe`. In the source repository, build Foop first. Then create the shortcut for the current user:
 
 ```powershell
 pwsh -NoProfile -File .\create-start-menu-shortcut.ps1 -Scope CurrentUser
