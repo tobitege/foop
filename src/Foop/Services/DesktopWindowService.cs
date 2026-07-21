@@ -11,13 +11,13 @@ internal sealed class DesktopWindowService
 {
     private readonly uint _currentProcessId = (uint)Environment.ProcessId;
 
-    internal IReadOnlyList<DesktopWindow> GetDesktopWindows()
+    internal IReadOnlyList<DesktopWindow> GetDesktopWindows(bool listByApplicationName)
     {
         var windows = new List<DesktopWindow>();
         var shellWindow = NativeMethods.GetShellWindow();
         NativeMethods.EnumWindowsProc callback = (windowHandle, _) =>
         {
-            if (TryCreateDesktopWindow(windowHandle, shellWindow, out var desktopWindow))
+            if (TryCreateDesktopWindow(windowHandle, shellWindow, listByApplicationName, out var desktopWindow))
             {
                 windows.Add(desktopWindow);
             }
@@ -30,9 +30,17 @@ internal sealed class DesktopWindowService
             throw new Win32Exception(Marshal.GetLastWin32Error());
         }
 
+        if (listByApplicationName)
+        {
+            return windows
+                .OrderBy(window => window.PrimaryLabel, StringComparer.CurrentCultureIgnoreCase)
+                .ThenBy(window => window.Title, StringComparer.CurrentCultureIgnoreCase)
+                .ToArray();
+        }
+
         return windows
-            .OrderBy(window => window.ProcessName, StringComparer.CurrentCultureIgnoreCase)
-            .ThenBy(window => window.Title, StringComparer.CurrentCultureIgnoreCase)
+            .OrderBy(window => window.Title, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(window => window.ApplicationName, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
     }
 
@@ -81,6 +89,7 @@ internal sealed class DesktopWindowService
     private bool TryCreateDesktopWindow(
         nint windowHandle,
         nint shellWindow,
+        bool listByApplicationName,
         out DesktopWindow desktopWindow)
     {
         desktopWindow = null!;
@@ -126,34 +135,80 @@ internal sealed class DesktopWindowService
             return false;
         }
 
+        var processDetails = GetProcessDetails(processId);
         desktopWindow = new DesktopWindow(
             windowHandle,
             title.ToString().Trim(),
-            GetProcessName(processId),
+            processDetails.ProcessName,
+            processDetails.ApplicationName,
+            processDetails.ExecutablePath,
             processId,
-            NativeMethods.IsIconic(windowHandle));
+            NativeMethods.IsIconic(windowHandle),
+            listByApplicationName);
         return true;
     }
 
-    private static string GetProcessName(uint processId)
+    private static ProcessDetails GetProcessDetails(uint processId)
     {
         try
         {
             using var process = Process.GetProcessById((int)processId);
-            return process.ProcessName;
+            var processName = string.IsNullOrWhiteSpace(process.ProcessName)
+                ? "Application"
+                : process.ProcessName;
+            var executablePath = string.Empty;
+            var applicationName = processName;
+
+            try
+            {
+                var mainModule = process.MainModule;
+                executablePath = mainModule?.FileName?.Trim() ?? string.Empty;
+                var description = mainModule?.FileVersionInfo.FileDescription;
+                if (!string.IsNullOrWhiteSpace(description))
+                {
+                    applicationName = description.Trim();
+                }
+                else
+                {
+                    var product = mainModule?.FileVersionInfo.ProductName;
+                    if (!string.IsNullOrWhiteSpace(product))
+                    {
+                        applicationName = product.Trim();
+                    }
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // Process name remains available as the identity fallback.
+            }
+            catch (Win32Exception)
+            {
+                // Elevated processes can deny access to their executable metadata.
+            }
+
+            return new ProcessDetails(processName, applicationName, executablePath);
         }
         catch (ArgumentException)
         {
-            return "Application";
+            return ProcessDetails.Unknown;
         }
         catch (InvalidOperationException)
         {
-            return "Application";
+            return ProcessDetails.Unknown;
         }
         catch (Win32Exception)
         {
-            return "Application";
+            return ProcessDetails.Unknown;
         }
+    }
+
+    private sealed record ProcessDetails(
+        string ProcessName,
+        string ApplicationName,
+        string ExecutablePath)
+    {
+        internal static ProcessDetails Unknown { get; } =
+            new("Application", "Application", string.Empty);
     }
 }
 

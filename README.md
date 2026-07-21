@@ -8,8 +8,8 @@ Foop is a small .NET 10 Windows desktop utility for multi-monitor setups. It lis
 
 ## Behavior
 
-- Creates one minimized Foop window on every monitor Windows currently reports as active.
-- Rebuilds those taskbar entries when displays are connected, disconnected, switched on, or switched off.
+- Creates one Foop window per active monitor: secondary monitors use a minimized taskbar button; the primary monitor uses the notification area (system tray) instead.
+- Rebuilds those entries when displays are connected, disconnected, switched on, or switched off.
 - Shows only visible, user-facing top-level desktop windows; Foop, tool windows, owned dialogs, and cloaked virtual-desktop windows are excluded.
 - Restores minimized or maximized windows before moving them.
 - Keeps the moved window inside the target monitor's working area.
@@ -33,10 +33,10 @@ Build the solution:
 dotnet build .\Foop.slnx --configuration Release
 ```
 
-To build and then run the test project in one step, use `verify.ps1`. It calls `build.ps1` (Release `dotnet build` of `Foop.slnx`) and `test.ps1` (`dotnet run` on `tests\Foop.Tests`), and writes logs to `artifacts\logs`:
+To build and then run the test project in one step, use `Scripts\verify.ps1`. It calls `build.ps1` (Release `dotnet build` of `Foop.slnx`) and `Scripts\test.ps1` (`dotnet run` on `tests\Foop.Tests`), and writes logs to `artifacts\logs`:
 
 ```powershell
-pwsh -NoProfile -File .\verify.ps1
+pwsh -NoProfile -File .\Scripts\verify.ps1
 ```
 
 ## Run
@@ -45,7 +45,7 @@ pwsh -NoProfile -File .\verify.ps1
 dotnet run --project .\src\Foop\Foop.csproj
 ```
 
-Closing any visible Foop window exits the application.
+Closing the primary Foop window hides it to the tray (Exit via the tray menu). Closing a Foop window on a secondary monitor exits the application.
 
 ## Start menu shortcut
 
@@ -61,7 +61,7 @@ To create the shortcut for all users, run PowerShell as administrator:
 pwsh -NoProfile -File .\create-start-menu-shortcut.ps1 -Scope AllUsers
 ```
 
-The shortcut targets the selected build configuration (`Release` by default) and uses the executable's icon.
+The shortcut targets the Release build and uses the executable's icon.
 
 ## Create a GitHub release
 

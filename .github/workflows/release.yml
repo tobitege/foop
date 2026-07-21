@@ -61,7 +61,7 @@ jobs:
 
       - name: Build and test
         shell: pwsh
-        run: pwsh -NoProfile -File ./verify.ps1 -Configuration Release
+        run: pwsh -NoProfile -File ./Scripts/verify.ps1
 
       - name: Publish Windows x64 application
         shell: pwsh

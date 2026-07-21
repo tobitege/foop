@@ -72,10 +72,56 @@
             <Setter Property="Margin" Value="8,0,0,0" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
+        <Style x:Key="SettingsGroupTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#93C5FD" />
+            <Setter Property="Margin" Value="2,0,0,10" />
+        </Style>
+        <Style x:Key="SettingsGroupBorderStyle" TargetType="Border">
+            <Setter Property="Padding" Value="18" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#1D4ED8" />
+            <Setter Property="Background" Value="#172554" />
+        </Style>
+        <Style x:Key="SettingsActionButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Background" Value="#1E3A8A" />
+            <Setter Property="Foreground" Value="#F8FAFC" />
+            <Setter Property="BorderBrush" Value="#60A5FA" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#2563EB" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#1D4ED8" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="28">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -94,24 +140,50 @@
             </StackPanel>
         </StackPanel>
 
-        <Border Grid.Row="1" Margin="0,22,0,0" Padding="18"
-                CornerRadius="12" BorderThickness="1"
-                BorderBrush="#1D4ED8" Background="#172554">
-            <StackPanel>
-                <CheckBox x:Name="StartWithWindowsCheckBox"
-                          Style="{StaticResource SettingsCheckBoxStyle}"
-                          Content="Start with Windows" />
-                <CheckBox x:Name="CreateStartMenuIconCheckBox"
-                          Style="{StaticResource SettingsCheckBoxStyle}"
-                          Content="Create Start Menu icon" />
-                <CheckBox x:Name="AutoMinimizeOnFoopingCheckBox"
-                          Style="{StaticResource SettingsCheckBoxStyle}"
-                          Content="Auto-Minimize on Fooping"
-                          Margin="0" />
-            </StackPanel>
-        </Border>
+        <StackPanel Grid.Row="1" Margin="0,22,0,0">
+            <TextBlock Style="{StaticResource SettingsGroupTitleStyle}" Text="Options" />
+            <Border Style="{StaticResource SettingsGroupBorderStyle}">
+                <StackPanel>
+                    <CheckBox x:Name="StartWithWindowsCheckBox"
+                              Style="{StaticResource SettingsCheckBoxStyle}"
+                              Content="Start with Windows" />
+                    <CheckBox x:Name="StartMinimizedCheckBox"
+                              Style="{StaticResource SettingsCheckBoxStyle}"
+                              Content="Start minimized" />
+                    <CheckBox x:Name="MinimizeToTrayCheckBox"
+                              Style="{StaticResource SettingsCheckBoxStyle}"
+                              Content="Minimize to Tray" />
+                    <CheckBox x:Name="CloseToTrayCheckBox"
+                              Style="{StaticResource SettingsCheckBoxStyle}"
+                              Content="Close to Tray" />
+                    <CheckBox x:Name="AutoMinimizeOnFoopingCheckBox"
+                              Style="{StaticResource SettingsCheckBoxStyle}"
+                              Content="Auto-Minimize on Fooping" />
+                    <CheckBox x:Name="ListByApplicationNameCheckBox"
+                              Style="{StaticResource SettingsCheckBoxStyle}"
+                              Content="List by application name"
+                              Margin="0" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
 
-        <StackPanel Grid.Row="2" Margin="0,22,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
+        <StackPanel Grid.Row="2" Margin="0,16,0,0">
+            <TextBlock Style="{StaticResource SettingsGroupTitleStyle}" Text="Actions" />
+            <Border Style="{StaticResource SettingsGroupBorderStyle}">
+                <Button Style="{StaticResource SettingsActionButtonStyle}"
+                        Click="OnCreateStartMenuIconClick"
+                        AutomationProperties.Name="Create Start Menu icon">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource FoopIcon}" Width="18" Height="18"
+                               VerticalAlignment="Center" />
+                        <TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+                                   Text="Create Start Menu icon…" />
+                    </StackPanel>
+                </Button>
+            </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Row="3" Margin="0,22,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Style="{StaticResource DialogButtonStyle}"
                     IsDefault="True"
                     Click="OnSaveClick"
@@ -121,5 +193,12 @@
                     Click="OnCancelClick"
                     Content="Cancel" />
         </StackPanel>
+
+        <TextBlock x:Name="VersionText" Grid.Row="4"
+                   Margin="0,16,0,0"
+                   HorizontalAlignment="Center"
+                   FontSize="13"
+                   Opacity="0.48"
+                   Foreground="#F8FAFC" />
     </Grid>
 </Window>

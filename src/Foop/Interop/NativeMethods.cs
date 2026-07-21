@@ -12,9 +12,14 @@ internal static class NativeMethods
     internal const long WsExAppWindow = 0x00040000L;
     internal const uint MonitorInfoPrimary = 0x00000001;
     internal const uint MonitorDefaultToNearest = 0x00000002;
+    internal const int WmWindowPosChanging = 0x0046;
+    internal const int WmMoving = 0x0216;
     internal const int SwRestore = 9;
     internal const int SwShow = 5;
+    internal const uint SwpNoSize = 0x0001;
+    internal const uint SwpNoMove = 0x0002;
     internal const uint SwpNoZOrder = 0x0004;
+    internal const uint SwpNoRedraw = 0x0008;
     internal const uint SwpNoActivate = 0x0010;
     internal const uint SwpNoOwnerZOrder = 0x0200;
 
@@ -153,6 +158,18 @@ internal static class NativeMethods
         internal Point MinPosition;
         internal Point MaxPosition;
         internal Rect NormalPosition;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct WindowPos
+    {
+        internal nint Hwnd;
+        internal nint HwndInsertAfter;
+        internal int X;
+        internal int Y;
+        internal int Cx;
+        internal int Cy;
+        internal uint Flags;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]

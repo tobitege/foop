@@ -1,16 +1,13 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [ValidateSet('CurrentUser', 'AllUsers')]
-    [string] $Scope = 'CurrentUser',
-
-    [ValidateSet('Debug', 'Release')]
-    [string] $Configuration = 'Release'
+    [string] $Scope = 'CurrentUser'
 )
 
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $portableExecutable = Join-Path $root 'Foop.exe'
-$developmentExecutable = Join-Path $root "src\Foop\bin\$Configuration\net10.0-windows\Foop.exe"
+$developmentExecutable = Join-Path $root 'src\Foop\bin\Release\net10.0-windows\Foop.exe'
 $executable = if (Test-Path -LiteralPath $portableExecutable -PathType Leaf) {
     $portableExecutable
 }

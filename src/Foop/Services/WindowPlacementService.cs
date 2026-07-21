@@ -68,7 +68,7 @@ internal static class WindowPlacementService
             currentRect.Right - currentRect.Left,
             currentRect.Bottom - currentRect.Top);
         var target = CenterWithin(current, monitor.WorkArea, constrainToWorkArea);
-        ApplyWindowRect(windowHandle, target);
+        ApplyWindowRect(windowHandle, target, suppressRedraw: false);
     }
 
     internal static bool TryPlaceFromWorkAreaOffset(
@@ -76,7 +76,10 @@ internal static class WindowPlacementService
         MonitorDescriptor monitor,
         double? offsetX,
         double? offsetY,
-        bool constrainToWorkArea)
+        double? width,
+        double? height,
+        bool constrainToWorkArea,
+        bool suppressRedraw = false)
     {
         if (offsetX is not double storedOffsetX
             || offsetY is not double storedOffsetY
@@ -86,23 +89,80 @@ internal static class WindowPlacementService
             return false;
         }
 
+        if (!TryResolveSize(windowHandle, width, height, out var resolvedWidth, out var resolvedHeight))
+        {
+            return false;
+        }
+
+        var proposed = new ScreenRect(
+            monitor.WorkArea.X + (int)Math.Round(storedOffsetX),
+            monitor.WorkArea.Y + (int)Math.Round(storedOffsetY),
+            resolvedWidth,
+            resolvedHeight);
+        var target = constrainToWorkArea
+            ? PlaceWithin(proposed, monitor.WorkArea)
+            : proposed;
+        ApplyWindowRect(windowHandle, target, suppressRedraw);
+        return true;
+    }
+
+    internal static void PlaceWithSize(
+        nint windowHandle,
+        MonitorDescriptor monitor,
+        double? width,
+        double? height,
+        bool centerWhenNoOffset,
+        bool suppressRedraw = false)
+    {
+        if (!TryResolveSize(windowHandle, width, height, out var resolvedWidth, out var resolvedHeight))
+        {
+            return;
+        }
+
+        if (!NativeMethods.GetWindowRect(windowHandle, out var currentRect))
+        {
+            return;
+        }
+
+        var current = new ScreenRect(
+            currentRect.Left,
+            currentRect.Top,
+            resolvedWidth,
+            resolvedHeight);
+        var target = centerWhenNoOffset
+            ? CenterWithin(current, monitor.WorkArea, constrainToWorkArea: true)
+            : PlaceWithin(current, monitor.WorkArea);
+        ApplyWindowRect(windowHandle, target, suppressRedraw);
+    }
+
+    private static bool TryResolveSize(
+        nint windowHandle,
+        double? width,
+        double? height,
+        out int resolvedWidth,
+        out int resolvedHeight)
+    {
+        resolvedWidth = 0;
+        resolvedHeight = 0;
+
+        if (width is double storedWidth
+            && height is double storedHeight
+            && WindowSizeConstraints.IsSafeStoredSize(storedWidth)
+            && WindowSizeConstraints.IsSafeStoredSize(storedHeight))
+        {
+            resolvedWidth = Math.Max(1, (int)Math.Round(storedWidth));
+            resolvedHeight = Math.Max(1, (int)Math.Round(storedHeight));
+            return true;
+        }
+
         if (!NativeMethods.GetWindowRect(windowHandle, out var currentRect))
         {
             return false;
         }
 
-        var width = currentRect.Right - currentRect.Left;
-        var height = currentRect.Bottom - currentRect.Top;
-        var proposed = new ScreenRect(
-            monitor.WorkArea.X + (int)Math.Round(storedOffsetX),
-            monitor.WorkArea.Y + (int)Math.Round(storedOffsetY),
-            width,
-            height);
-        var target = constrainToWorkArea
-            ? PlaceWithin(proposed, monitor.WorkArea)
-            : proposed;
-        ApplyWindowRect(windowHandle, target);
-        return true;
+        resolvedWidth = currentRect.Right - currentRect.Left;
+        resolvedHeight = currentRect.Bottom - currentRect.Top;
+        return resolvedWidth > 0 && resolvedHeight > 0;
     }
 
     internal static bool TryPositionProxy(nint windowHandle, MonitorDescriptor monitor)
@@ -120,11 +180,31 @@ internal static class WindowPlacementService
             flags);
     }
 
-    private static void ApplyWindowRect(nint windowHandle, ScreenRect target)
+    internal static void ParkOffScreen(nint windowHandle)
+    {
+        var flags = NativeMethods.SwpNoZOrder |
+                    NativeMethods.SwpNoOwnerZOrder |
+                    NativeMethods.SwpNoActivate |
+                    NativeMethods.SwpNoRedraw;
+        NativeMethods.SetWindowPos(
+            windowHandle,
+            nint.Zero,
+            -32000,
+            -32000,
+            1,
+            1,
+            flags);
+    }
+
+    private static void ApplyWindowRect(nint windowHandle, ScreenRect target, bool suppressRedraw)
     {
         var flags = NativeMethods.SwpNoZOrder |
                     NativeMethods.SwpNoOwnerZOrder |
                     NativeMethods.SwpNoActivate;
+        if (suppressRedraw)
+        {
+            flags |= NativeMethods.SwpNoRedraw;
+        }
 
         if (!NativeMethods.SetWindowPos(
                 windowHandle,
