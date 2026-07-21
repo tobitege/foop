@@ -19,7 +19,7 @@ Foop is a small .NET 10 Windows desktop utility for multi-monitor setups. It lis
 - Restores minimized or maximized windows before moving them.
 - Keeps the moved window inside the target monitor's working area.
 - Persists view mode, window layout, tray behavior, startup behavior, and app monitor preferences in the current user's profile.
-- Supports **Start with Windows**, **Start minimized**, **Auto-Minimize on Fooping**, **Minimize to Tray**, and **Close to Tray**.
+- Supports **Start with Windows**, **Start minimized** (logon autostart only), **Auto-Minimize on Fooping**, **Minimize to Tray**, and **Close to Tray**.
 - Runs as a single instance per Windows session.
 - Reports Windows access denial, which can occur when the target application runs elevated and Foop does not.
 

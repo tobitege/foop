@@ -31,6 +31,7 @@ public partial class MainWindow : Window
     private bool _persistWindowBounds;
     private bool _constrainToTargetMonitor;
     private bool _startupPresentationComplete;
+    private bool _retainStartupTaskbarEntry;
 
     internal MainWindow(
         DesktopWindowService desktopWindowService,
@@ -86,6 +87,8 @@ public partial class MainWindow : Window
             return;
         }
 
+        _retainStartupTaskbarEntry = false;
+        _startupPresentationComplete = true;
         Opacity = 0;
         ShowActivated = false;
         Show();
@@ -137,15 +140,17 @@ public partial class MainWindow : Window
             // Primary stays unshown in the tray until explicitly presented.
             Opacity = 1;
             _persistWindowBounds = true;
-        }
-        else
-        {
-            // Create the taskbar entry in a minimized state so no normal window can flash.
-            WindowState = WindowState.Minimized;
-            Show();
-            Opacity = 1;
+            _constrainToTargetMonitor = true;
+            _startupPresentationComplete = true;
+            return;
         }
 
+        // Keep the secondary taskbar button until the user opens this window.
+        // Minimize-to-tray must not hide the startup entry.
+        _retainStartupTaskbarEntry = true;
+        WindowState = WindowState.Minimized;
+        Show();
+        Opacity = 1;
         _constrainToTargetMonitor = true;
         _startupPresentationComplete = true;
     }
@@ -619,12 +624,15 @@ public partial class MainWindow : Window
 
     private void OnStateChanged(object? sender, EventArgs e)
     {
-        if (_startupPresentationComplete
-            && WindowState == WindowState.Minimized
-            && _settingsService.Current.MinimizeToTray)
+        if (_retainStartupTaskbarEntry
+            || !_startupPresentationComplete
+            || WindowState != WindowState.Minimized
+            || !_settingsService.Current.MinimizeToTray)
         {
-            Hide();
+            return;
         }
+
+        Hide();
     }
 
     private void OnClosing(object? sender, CancelEventArgs e)

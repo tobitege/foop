@@ -124,7 +124,14 @@ internal sealed class FoopController : IDisposable
 
     private void PresentLaunchWindow()
     {
-        if (_isShuttingDown || _settingsService.Current.StartMinimized)
+        if (_isShuttingDown)
+        {
+            return;
+        }
+
+        // Start minimized applies only to Windows logon autostart, not Start-menu launches.
+        if (_settingsService.Current.StartMinimized
+            && SettingsService.HasAutostartArgument(Environment.GetCommandLineArgs()))
         {
             return;
         }

@@ -12,6 +12,7 @@ namespace Foop.Services;
 internal sealed class SettingsService
 {
     internal const string CreateAllUsersStartMenuArgument = "--create-start-menu-all-users";
+    internal const string AutostartArgument = "--autostart";
 
     private const string RunValueName = "Foop";
     private const string ShortcutFileName = "Foop.lnk";
@@ -30,6 +31,18 @@ internal sealed class SettingsService
             "Foop");
         _settingsPath = Path.Combine(_settingsDirectory, "settings.json");
         Current = Load();
+        if (Current.StartWithWindows)
+        {
+            try
+            {
+                // Refresh the Run entry so older installs pick up the autostart argument.
+                ApplyStartWithWindows(true);
+            }
+            catch
+            {
+                // Autostart refresh must not block startup.
+            }
+        }
     }
 
     internal AppSettings Current { get; private set; }
@@ -183,10 +196,16 @@ internal sealed class SettingsService
     internal static bool CanCreateAllUsersShortcut() => IsCurrentProcessElevated();
 
     internal static bool HasCreateAllUsersStartMenuArgument(IEnumerable<string>? args) =>
+        HasArgument(args, CreateAllUsersStartMenuArgument);
+
+    internal static bool HasAutostartArgument(IEnumerable<string>? args) =>
+        HasArgument(args, AutostartArgument);
+
+    private static bool HasArgument(IEnumerable<string>? args, string argumentName) =>
         args is not null
         && args.Any(argument => string.Equals(
             argument,
-            CreateAllUsersStartMenuArgument,
+            argumentName,
             StringComparison.OrdinalIgnoreCase));
 
     internal static bool TryRestartElevated(string arguments)
@@ -467,7 +486,7 @@ internal sealed class SettingsService
         if (enabled)
         {
             var executablePath = GetExecutablePath();
-            key.SetValue(RunValueName, QuotePath(executablePath));
+            key.SetValue(RunValueName, $"{QuotePath(executablePath)} {AutostartArgument}");
             return;
         }
 
