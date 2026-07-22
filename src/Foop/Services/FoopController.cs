@@ -27,6 +27,7 @@ internal sealed class FoopController : IDisposable
             () => _activeMonitors,
             Application.Current.Dispatcher);
         _trayIcon = new TrayIconService(_settingsService, OpenWindowAtCursor, Shutdown);
+        SingleInstanceService.WatchShowRequests(OpenWindowAtCursor);
         Application.Current.Dispatcher.BeginInvoke(
             PresentLaunchWindow,
             DispatcherPriority.ApplicationIdle);

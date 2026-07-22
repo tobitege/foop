@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-07-22
+
+### Fixed
+
+- When Foop is already running, a second Start-menu launch activates the existing instance and opens the Foop window on the monitor under the cursor (instead of exiting silently).
+
+### Changed
+
+- Bump application version to 1.0.3.
+
 ## [1.0.1] - 2026-07-22
 
 ### Fixed

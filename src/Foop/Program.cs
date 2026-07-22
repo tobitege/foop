@@ -1,20 +1,15 @@
 ﻿using System.IO;
+using System.Windows;
+using Foop.Services;
 
 namespace Foop;
 
 internal static class Program
 {
-    private const string SingleInstanceMutexName =
-        @"Local\Foop.2A7623D8-BC9E-4D68-AE56-83A84CB135EC";
-
     [STAThread]
-    public static void Main()
+    private static void Main()
     {
-        using var singleInstanceMutex = new Mutex(
-            initiallyOwned: true,
-            SingleInstanceMutexName,
-            out var isFirstInstance);
-        if (!isFirstInstance)
+        if (!SingleInstanceService.TryStartAsPrimaryInstance())
         {
             return;
         }
@@ -23,13 +18,13 @@ internal static class Program
 
         try
         {
-            var application = new App();
-            application.InitializeComponent();
-            application.Run();
+            var app = new App();
+            app.InitializeComponent();
+            app.Run();
         }
         finally
         {
-            singleInstanceMutex.ReleaseMutex();
+            SingleInstanceService.Release();
         }
     }
 
